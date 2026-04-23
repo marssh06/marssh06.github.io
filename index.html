@@ -39,6 +39,9 @@ button{cursor:pointer;border:0;background:none} :focus-visible{outline:2px solid
 .nav a:hover{color:var(--pr)}
 .hdr-actions{display:flex;gap:10px;align-items:center}
 .icon-btn{width:46px;height:46px;border-radius:var(--rf);border:1px solid var(--border);display:grid;place-items:center;background:var(--surface)}
+.cart-badge{position:absolute;top:-4px;right:-4px;background:var(--pr);color:#fff;font-size:11px;font-weight:800;width:18px;height:18px;border-radius:50%;display:none;place-items:center;line-height:1}
+.add-cart-btn{margin-top:8px;width:100%;padding:7px 0;border-radius:var(--rf);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;font-weight:800;transition:background .15s,border-color .15s}
+.add-cart-btn:hover{background:var(--bg3);border-color:var(--pr)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:var(--rf);font-size:14px;font-weight:800;transition:transform .15s,box-shadow .15s}
 .btn:hover{transform:translateY(-2px)}
 .btn-gold{background:var(--gld);color:#0a0a0a;box-shadow:var(--shadow-md)}
@@ -111,6 +114,8 @@ button{cursor:pointer;border:0;background:none} :focus-visible{outline:2px solid
 @media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
 </style>
 </head>
+<script src="cart.js"></script>
+  
 <body>
 <header class="hdr">
   <div class="container hdr-row">
