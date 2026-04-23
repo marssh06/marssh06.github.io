@@ -140,7 +140,7 @@ function buildOrderMessage(product, duration, price) {
 function renderProduct(p) {
   document.title = p.name + ' | ELITE-SUBS';
   currentProduct = p;
-  const availPlans = durations.filter(d => p.prices[d]);
+  const availPlans = Object.keys(p.prices).filter(d => p.prices[d]);
   if (!selectedDuration || !availPlans.includes(selectedDuration)) {
     selectedDuration = availPlans[0] || null;
   }
