@@ -94,6 +94,7 @@ a{color:inherit;text-decoration:none} button,input,select{font:inherit;color:inh
     </a>
     <div class="hdr-actions">
       <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">🌙</button>
+      <a class="icon-btn" href="cart.html" aria-label="Cart" style="position:relative">🛒<span class="cart-badge" id="cartBadge"></span></a>
     </div>
   </div>
 </header>
@@ -250,8 +251,12 @@ themeToggle.addEventListener('click', () => {
   themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
   localStorage.setItem('es-theme', theme);
 });
+updateCartBadge();
+</script>
+});
 
 init();
 </script>
+<script src="cart.js"></script>
 </body>
 </html>
