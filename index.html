@@ -11,15 +11,15 @@
 <style>
 :root,[data-theme="light"]{
   --pr:#c9a227;--pr2:#e8c252;--dk:#0a0a0a;--gld:linear-gradient(135deg,#c9a227,#f0d060,#c9a227);
-  --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;--surface:#1e1e1e;--surface2:#252525;--surface3:#2e2e2e;
-  --text:#f5f0e8;--muted:#a89880;--border:rgba(201,162,39,.18);--divider:rgba(201,162,39,.10);
-  --shadow-sm:0 8px 24px rgba(0,0,0,.45);--shadow-md:0 18px 48px rgba(0,0,0,.55);--shadow-lg:0 32px 72px rgba(0,0,0,.65);
-  --r:20px;--rf:999px;--wrap:1200px;
-}
-[data-theme="light"]{
   --bg:#faf7f0;--bg2:#f5f0e6;--bg3:#ede8da;--surface:#fff;--surface2:#f9f5eb;--surface3:#f0ebd8;
   --text:#1a140a;--muted:#7a6040;--border:rgba(150,110,30,.18);--divider:rgba(150,110,30,.10);
   --shadow-sm:0 8px 24px rgba(100,70,10,.10);--shadow-md:0 18px 48px rgba(100,70,10,.14);--shadow-lg:0 32px 72px rgba(100,70,10,.18);
+  --r:20px;--rf:999px;--wrap:1200px;
+}
+[data-theme="dark"]{
+  --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;--surface:#1e1e1e;--surface2:#252525;--surface3:#2e2e2e;
+  --text:#f5f0e8;--muted:#a89880;--border:rgba(201,162,39,.18);--divider:rgba(201,162,39,.10);
+  --shadow-sm:0 8px 24px rgba(0,0,0,.45);--shadow-md:0 18px 48px rgba(0,0,0,.55);--shadow-lg:0 32px 72px rgba(0,0,0,.65);
 }
 *{box-sizing:border-box;margin:0;padding:0} html{scroll-behavior:smooth}
 body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
@@ -285,7 +285,7 @@ function renderGrid() {
 
 searchInput.addEventListener('input', renderGrid);
 
-let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+let theme = localStorage.getItem('es-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 document.documentElement.setAttribute('data-theme', theme);
 themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
 themeToggle.addEventListener('click', () => {
@@ -294,8 +294,6 @@ themeToggle.addEventListener('click', () => {
   themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
   localStorage.setItem('es-theme', theme);
 });
-const saved = localStorage.getItem('es-theme');
-if (saved) { theme = saved; document.documentElement.setAttribute('data-theme', theme); themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙'; }
 
 renderGrid();
 </script>
