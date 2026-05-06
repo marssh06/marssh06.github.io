@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Order History | ELITE-SUBS</title>
+<title>Admin Panel | ELITE-SUBS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
   --bg:#faf7f0;--bg2:#f5f0e6;--bg3:#ede8da;--surface:#fff;--surface2:#f9f5eb;--surface3:#f0ebd8;
   --text:#1a140a;--muted:#7a6040;--border:rgba(150,110,30,.18);--divider:rgba(150,110,30,.10);
   --shadow-sm:0 8px 24px rgba(100,70,10,.10);--shadow-md:0 18px 48px rgba(100,70,10,.14);--shadow-lg:0 32px 72px rgba(100,70,10,.18);
-  --r:20px;--rf:999px;--wrap:800px;
+  --r:20px;--rf:999px;--wrap:900px;
 }
 [data-theme="dark"]{
   --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;--surface:#1e1e1e;--surface2:#252525;--surface3:#2e2e2e;
@@ -37,10 +37,16 @@ a{color:inherit;text-decoration:none} button,input{font:inherit;color:inherit} b
 .page-sub{color:var(--muted);font-size:15px;margin-bottom:28px}
 .back-link{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;font-weight:700;padding:10px 0;margin-bottom:16px;transition:color .15s}
 .back-link:hover{color:var(--pr)}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:32px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;box-shadow:var(--shadow-sm)}
+.stat-val{font-family:'Baloo 2',cursive;font-size:34px;font-weight:900;background:var(--gld);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
+.stat-label{font-size:13px;color:var(--muted);font-weight:700;margin-top:4px}
+.section-title{font-family:'Baloo 2',cursive;font-size:22px;font-weight:900;margin-bottom:14px}
 .order-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
 .order-head{display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--divider)}
 .order-id{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 .order-date{font-size:13px;color:var(--muted);margin-top:2px}
+.order-customer{font-size:13px;color:var(--pr);font-weight:700;margin-top:3px}
 .order-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--divider);font-size:14px}
 .order-item:last-child{border-bottom:none}
 .order-item-name{font-weight:700}
@@ -56,6 +62,9 @@ a{color:inherit;text-decoration:none} button,input{font:inherit;color:inherit} b
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:var(--rf);font-size:14px;font-weight:800;transition:transform .15s,box-shadow .15s;border:0;cursor:pointer;font-family:inherit}
 .btn:hover{transform:translateY(-2px)}
 .btn-gold{background:var(--gld);color:#0a0a0a;box-shadow:var(--shadow-md)}
+.filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.filter-bar input{min-height:40px;border-radius:var(--rf);border:1.5px solid var(--border);background:var(--surface);padding:0 14px;font-size:14px;color:var(--text);outline:none;font-family:inherit;flex:1;min-width:200px}
+.filter-bar input:focus{border-color:var(--pr)}
 </style>
 </head>
 <body>
@@ -67,7 +76,7 @@ a{color:inherit;text-decoration:none} button,input{font:inherit;color:inherit} b
     <div class="hdr-actions">
       <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">🌙</button>
       <div class="es-uwrap">
-        <button class="icon-btn" id="esUserBtn" aria-label="Account" style="font-size:13px;font-weight:900;padding:0 14px;gap:6px">👤 Sign In</button>
+        <button class="icon-btn" id="esUserBtn" aria-label="Account" style="font-size:13px;font-weight:900;padding:0 14px;gap:6px;width:auto">👤 Sign In</button>
       </div>
     </div>
   </div>
@@ -76,18 +85,20 @@ a{color:inherit;text-decoration:none} button,input{font:inherit;color:inherit} b
 <main>
   <div class="container page">
     <a class="back-link" href="index.html">← Back to store</a>
-    <h1 class="page-title">Order <span>History</span></h1>
-    <p class="page-sub" id="ordersSubtitle"></p>
-    <div id="ordersContent"></div>
+    <h1 class="page-title">Admin <span>Panel</span></h1>
+    <p class="page-sub" id="adminSubtitle"></p>
+    <div id="adminContent"></div>
   </div>
 </main>
 
-<script src="cart.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="auth.js"></script>
 <script>
+// ── Set your admin email here ─────────────────────────────────────────────────
+const ADMIN_EMAIL = 'YOUR_EMAIL_HERE';
+
 const themeToggle = document.getElementById('themeToggle');
 let theme = localStorage.getItem('es-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 document.documentElement.setAttribute('data-theme', theme);
@@ -105,47 +116,96 @@ function formatDate(iso) {
     ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
+let _allOrders = [];
+
 async function renderOrders() {
   const user = esCurrentUser();
-  const content = document.getElementById('ordersContent');
-  const subtitle = document.getElementById('ordersSubtitle');
+  const content = document.getElementById('adminContent');
+  const subtitle = document.getElementById('adminSubtitle');
 
   if (!user) {
     subtitle.textContent = '';
     content.innerHTML = `
       <div class="gate">
         <div class="icon">🔒</div>
-        <h2>Sign in to view your orders</h2>
-        <p>Create a free account to save and track your order history forever.</p>
-        <button class="btn btn-gold" onclick="openAuthModal()">Sign In / Create Account</button>
+        <h2>Admin access required</h2>
+        <p>Sign in with your owner account to view all orders.</p>
+        <button class="btn btn-gold" onclick="openAuthModal()">Sign In</button>
       </div>`;
     return;
   }
 
-  content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Loading orders…</div>';
+  if (ADMIN_EMAIL !== 'YOUR_EMAIL_HERE' && user.email !== ADMIN_EMAIL) {
+    subtitle.textContent = '';
+    content.innerHTML = `
+      <div class="gate">
+        <div class="icon">🚫</div>
+        <h2>Not authorized</h2>
+        <p>This page is only accessible to the store owner.</p>
+      </div>`;
+    return;
+  }
 
-  const orders = await esGetOrders();
-  subtitle.textContent = orders.length
-    ? `${orders.length} order${orders.length === 1 ? '' : 's'} placed`
-    : '';
+  content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Loading all orders…</div>';
 
+  const snap = await firebase.database().ref('allorders').orderByChild('date').once('value');
+  _allOrders = [];
+  snap.forEach(c => _allOrders.unshift(c.val()));
+
+  renderOrderList(_allOrders, subtitle, content);
+}
+
+function renderOrderList(orders, subtitle, content) {
   if (!orders.length) {
+    subtitle.textContent = 'No orders yet';
     content.innerHTML = `
       <div class="empty-state">
         <div class="icon">📋</div>
         <h2>No orders yet</h2>
-        <p>Your order history will appear here after you order via WhatsApp.</p>
-        <a class="btn btn-gold" href="index.html">Browse products</a>
+        <p>Orders will appear here when customers start buying.</p>
       </div>`;
     return;
   }
 
-  content.innerHTML = orders.map(order => `
+  const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
+  const uniqueUsers = new Set(orders.map(o => o.userEmail)).size;
+  subtitle.textContent = `${orders.length} order${orders.length === 1 ? '' : 's'} · $${totalRevenue.toFixed(2)} revenue · ${uniqueUsers} customer${uniqueUsers === 1 ? '' : 's'}`;
+
+  content.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val">${orders.length}</div><div class="stat-label">Total Orders</div></div>
+      <div class="stat-card"><div class="stat-val">$${totalRevenue.toFixed(2)}</div><div class="stat-label">Revenue</div></div>
+      <div class="stat-card"><div class="stat-val">${uniqueUsers}</div><div class="stat-label">Customers</div></div>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="orderSearch" placeholder="Search by customer, product, or order ID…">
+    </div>
+    <div class="section-title">All Orders</div>
+    <div id="orderList">
+      ${orders.map(renderOrderCard).join('')}
+    </div>`;
+
+  document.getElementById('orderSearch').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    const filtered = _allOrders.filter(o =>
+      o.id.toLowerCase().includes(q) ||
+      o.userEmail.toLowerCase().includes(q) ||
+      (o.userName || '').toLowerCase().includes(q) ||
+      o.items.some(i => i.name.toLowerCase().includes(q))
+    );
+    document.getElementById('orderList').innerHTML = filtered.map(renderOrderCard).join('') ||
+      '<div style="text-align:center;padding:40px;color:var(--muted)">No orders match your search.</div>';
+  });
+}
+
+function renderOrderCard(order) {
+  return `
     <div class="order-card">
       <div class="order-head">
         <div>
           <div class="order-id">${order.id}</div>
           <div class="order-date">📅 ${formatDate(order.date)}</div>
+          <div class="order-customer">👤 ${order.userName || ''}${order.userName ? ' · ' : ''}${order.userEmail}</div>
         </div>
         <div class="order-total-val">$${order.total.toFixed(2)}</div>
       </div>
@@ -161,7 +221,7 @@ async function renderOrders() {
         <span class="order-total-label">Total</span>
         <span class="order-total-val">$${order.total.toFixed(2)}</span>
       </div>
-    </div>`).join('');
+    </div>`;
 }
 </script>
 </body>

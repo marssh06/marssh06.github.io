@@ -1,63 +1,83 @@
-// auth.js — ELITE-SUBS user authentication and order history
+// auth.js — ELITE-SUBS Firebase auth & order history
 
-// ── Data layer ────────────────────────────────────────────────────────────────
-const _AU = 'es-users';
-const _AS = 'es-session';
+const _FB_CFG = {
+  apiKey: "AIzaSyBf7g0CCCWhR8gf-q7iqOjTiLFYPFyduOc",
+  authDomain: "elite-subs.firebaseapp.com",
+  databaseURL: "https://elite-subs-default-rtdb.firebaseio.com",
+  projectId: "elite-subs",
+  storageBucket: "elite-subs.firebasestorage.app",
+  messagingSenderId: "506404970592",
+  appId: "1:506404970592:web:ead1d0669494ebe224e305"
+};
 
-function _enc(p) { try { return btoa(unescape(encodeURIComponent(p))); } catch { return btoa(p); } }
+if (!firebase.apps.length) firebase.initializeApp(_FB_CFG);
+const _auth = firebase.auth();
+const _db = firebase.database();
 
-function esGetUsers() { try { return JSON.parse(localStorage.getItem(_AU)) || {}; } catch { return {}; } }
-function _saveUsers(u) { localStorage.setItem(_AU, JSON.stringify(u)); }
+// ── State ─────────────────────────────────────────────────────────────────────
+let _user = null;
+function esCurrentUser() { return _user; }
 
-function esRegister(email, password, name) {
-  const users = esGetUsers();
-  const key = email.toLowerCase().trim();
-  if (users[key]) return { error: 'An account with this email already exists.' };
-  users[key] = { name: name.trim(), pwd: _enc(password), orders: [] };
-  _saveUsers(users);
-  localStorage.setItem(_AS, JSON.stringify({ email: key, name: name.trim() }));
-  return { success: true };
+// ── Auth API ──────────────────────────────────────────────────────────────────
+async function esRegister(email, password, name) {
+  try {
+    const c = await _auth.createUserWithEmailAndPassword(email.trim(), password);
+    await c.user.updateProfile({ displayName: name.trim() });
+    await _db.ref('users/' + c.user.uid).set({
+      name: name.trim(), email: email.trim().toLowerCase(), joinedAt: new Date().toISOString()
+    });
+    return { success: true };
+  } catch(e) { return { error: _fbErr(e) }; }
 }
 
-function esLogin(email, password) {
-  const users = esGetUsers();
-  const key = email.toLowerCase().trim();
-  const u = users[key];
-  if (!u) return { error: 'No account found with this email.' };
-  if (u.pwd !== _enc(password)) return { error: 'Incorrect password.' };
-  localStorage.setItem(_AS, JSON.stringify({ email: key, name: u.name }));
-  return { success: true };
+async function esLogin(email, password) {
+  try {
+    await _auth.signInWithEmailAndPassword(email.trim(), password);
+    return { success: true };
+  } catch(e) { return { error: _fbErr(e) }; }
 }
 
 function esLogout() {
-  localStorage.removeItem(_AS);
-  location.href = 'index.html';
+  _auth.signOut().then(() => { location.href = 'index.html'; });
 }
 
-function esCurrentUser() {
-  try { return JSON.parse(localStorage.getItem(_AS)); } catch { return null; }
-}
-
-function esRecordOrder(items, total) {
-  const user = esCurrentUser();
-  if (!user || !items || !items.length) return;
-  const users = esGetUsers();
-  const u = users[user.email];
-  if (!u) return;
-  if (!u.orders) u.orders = [];
-  u.orders.unshift({
+async function esRecordOrder(items, total) {
+  const u = _auth.currentUser;
+  if (!u || !items || !items.length) return;
+  const order = {
     id: 'ORD-' + Date.now(),
     date: new Date().toISOString(),
+    userEmail: u.email,
+    userName: u.displayName || '',
     items: items.map(i => ({ id: i.id, name: i.name, duration: i.duration, price: +i.price, qty: i.qty || 1 })),
     total: +parseFloat(total).toFixed(2)
-  });
-  _saveUsers(users);
+  };
+  const updates = {};
+  updates['orders/' + u.uid + '/' + order.id] = order;
+  updates['allorders/' + order.id] = order;
+  await _db.ref().update(updates);
 }
 
-function esGetOrders() {
-  const user = esCurrentUser();
-  if (!user) return [];
-  return (esGetUsers()[user.email] || {}).orders || [];
+async function esGetOrders() {
+  const u = _auth.currentUser;
+  if (!u) return [];
+  const snap = await _db.ref('orders/' + u.uid).orderByChild('date').once('value');
+  const list = [];
+  snap.forEach(c => list.unshift(c.val()));
+  return list;
+}
+
+function _fbErr(e) {
+  const m = {
+    'auth/email-already-in-use': 'An account with this email already exists.',
+    'auth/invalid-email': 'Invalid email address.',
+    'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/invalid-credential': 'Invalid email or password.',
+    'auth/too-many-requests': 'Too many attempts. Please try again later.'
+  };
+  return m[e.code] || e.message || 'Something went wrong.';
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -77,6 +97,7 @@ const _CSS = `
 .es-aerr{color:#e05555;font-size:13px;font-weight:700;margin-bottom:10px;display:none;padding:10px 12px;border-radius:10px;background:rgba(224,85,85,.1)}
 .es-asubmit{width:100%;min-height:50px;border-radius:999px;background:var(--gld);color:#0a0a0a;font-size:15px;font-weight:900;border:0;cursor:pointer;transition:opacity .15s;margin-top:6px;font-family:inherit}
 .es-asubmit:hover{opacity:.88}
+.es-asubmit:disabled{opacity:.5;cursor:not-allowed}
 .es-ahead{font-family:'Baloo 2',cursive;font-size:24px;font-weight:900;margin-bottom:2px;color:var(--text)}
 .es-asub{color:var(--muted);font-size:14px;margin-bottom:18px}
 .es-uwrap{position:relative}
@@ -87,7 +108,7 @@ const _CSS = `
 .es-dropemail{padding:8px 12px 4px;font-size:12px;color:var(--muted);font-weight:700;word-break:break-all;border-bottom:1px solid var(--divider);margin-bottom:4px}
 `;
 
-// ── Modal HTML ────────────────────────────────────────────────────────────────
+// ── Modal ─────────────────────────────────────────────────────────────────────
 function _injectModal() {
   document.body.insertAdjacentHTML('beforeend', `
 <div id="esAuthModal">
@@ -143,30 +164,34 @@ function _wireModal() {
     });
   });
 
-  document.getElementById('esLoginBtn').addEventListener('click', () => {
+  document.getElementById('esLoginBtn').addEventListener('click', async () => {
     const err = document.getElementById('esLoginErr');
+    const btn = document.getElementById('esLoginBtn');
     err.style.display = 'none';
     const email = document.getElementById('esLoginEmail').value.trim();
     const pwd = document.getElementById('esLoginPwd').value;
     if (!email || !pwd) { err.textContent = 'Please fill in all fields.'; err.style.display = 'block'; return; }
-    const r = esLogin(email, pwd);
+    btn.textContent = 'Signing in…'; btn.disabled = true;
+    const r = await esLogin(email, pwd);
+    btn.textContent = 'Sign In →'; btn.disabled = false;
     if (r.error) { err.textContent = r.error; err.style.display = 'block'; return; }
     closeAuthModal();
-    location.reload();
   });
 
-  document.getElementById('esRegBtn').addEventListener('click', () => {
+  document.getElementById('esRegBtn').addEventListener('click', async () => {
     const err = document.getElementById('esRegErr');
+    const btn = document.getElementById('esRegBtn');
     err.style.display = 'none';
     const name = document.getElementById('esRegName').value.trim();
     const email = document.getElementById('esRegEmail').value.trim();
     const pwd = document.getElementById('esRegPwd').value;
     if (!name || !email || !pwd) { err.textContent = 'Please fill in all fields.'; err.style.display = 'block'; return; }
     if (pwd.length < 6) { err.textContent = 'Password must be at least 6 characters.'; err.style.display = 'block'; return; }
-    const r = esRegister(email, pwd, name);
+    btn.textContent = 'Creating…'; btn.disabled = true;
+    const r = await esRegister(email, pwd, name);
+    btn.textContent = 'Create Account →'; btn.disabled = false;
     if (r.error) { err.textContent = r.error; err.style.display = 'block'; return; }
     closeAuthModal();
-    location.reload();
   });
 
   ['esLoginEmail', 'esLoginPwd'].forEach(id => {
@@ -177,41 +202,33 @@ function _wireModal() {
   });
 }
 
-// ── Header user button ────────────────────────────────────────────────────────
-function _updateUserBtn() {
+// ── Header button ─────────────────────────────────────────────────────────────
+function _updateUserBtn(fbUser) {
   const btn = document.getElementById('esUserBtn');
   if (!btn) return;
-  const user = esCurrentUser();
   const wrap = btn.closest('.es-uwrap');
+  const existingDrop = document.getElementById('esUserDrop');
+  if (existingDrop) existingDrop.remove();
 
-  if (user) {
-    const initial = user.name.charAt(0).toUpperCase();
-    const firstName = user.name.split(' ')[0];
+  if (fbUser) {
+    const name = fbUser.displayName || fbUser.email.split('@')[0];
+    const initial = name.charAt(0).toUpperCase();
+    const firstName = name.split(' ')[0];
     btn.innerHTML = `<span style="width:26px;height:26px;border-radius:50%;background:var(--gld);color:#0a0a0a;font-size:12px;font-weight:900;display:grid;place-items:center;flex-shrink:0">${initial}</span>${firstName}`;
-    btn.style.cssText += ';display:flex;align-items:center;gap:6px;padding:0 12px;min-width:unset';
-
-    if (!document.getElementById('esUserDrop')) {
-      const drop = document.createElement('div');
-      drop.id = 'esUserDrop';
-      drop.innerHTML = `
-        <div class="es-dropemail">${user.email}</div>
-        <a href="orders.html">📋 Order History</a>
-        <button class="es-dropitem" id="esLogoutBtn">🚪 Sign Out</button>`;
-      wrap.appendChild(drop);
-      document.getElementById('esLogoutBtn').addEventListener('click', esLogout);
-    }
-
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      document.getElementById('esUserDrop').classList.toggle('open');
-    });
-    document.addEventListener('click', () => {
-      const d = document.getElementById('esUserDrop');
-      if (d) d.classList.remove('open');
-    });
+    btn.style.cssText += ';display:flex;align-items:center;gap:6px;padding:0 12px;width:auto;min-width:unset';
+    const drop = document.createElement('div');
+    drop.id = 'esUserDrop';
+    drop.innerHTML = `
+      <div class="es-dropemail">${fbUser.email}</div>
+      <a href="orders.html">📋 Order History</a>
+      <button class="es-dropitem" id="esLogoutBtn">🚪 Sign Out</button>`;
+    wrap.appendChild(drop);
+    document.getElementById('esLogoutBtn').addEventListener('click', esLogout);
+    btn.onclick = e => { e.stopPropagation(); drop.classList.toggle('open'); };
   } else {
     btn.innerHTML = '👤 Sign In';
-    btn.addEventListener('click', openAuthModal);
+    btn.style.cssText = '';
+    btn.onclick = openAuthModal;
   }
 }
 
@@ -222,7 +239,17 @@ function initAuth() {
   document.head.appendChild(style);
   _injectModal();
   _wireModal();
-  _updateUserBtn();
+
+  document.addEventListener('click', () => {
+    const d = document.getElementById('esUserDrop');
+    if (d) d.classList.remove('open');
+  });
+
+  _auth.onAuthStateChanged(fbUser => {
+    _user = fbUser ? { uid: fbUser.uid, email: fbUser.email, name: fbUser.displayName || fbUser.email.split('@')[0] } : null;
+    _updateUserBtn(fbUser);
+    if (typeof renderOrders === 'function') renderOrders();
+  });
 }
 
 if (document.readyState === 'loading') {
