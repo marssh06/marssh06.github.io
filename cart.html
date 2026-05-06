@@ -98,6 +98,7 @@ button:focus-visible{outline:2px solid var(--pr);outline-offset:3px;border-radiu
     <div class="hdr-actions">
       <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">🌙</button>
       <a class="icon-btn" href="cart.html" aria-label="Cart" style="position:relative">🛒<span class="cart-badge" id="cartBadge"></span></a>
+      <div class="es-uwrap"><button class="icon-btn" id="esUserBtn" aria-label="Account" style="font-size:13px;font-weight:900;padding:0 14px;gap:6px;width:auto">👤 Sign In</button></div>
     </div>
   </div>
 </header>
@@ -223,6 +224,13 @@ themeToggle.addEventListener('click', () => {
 
 updateCartBadge();
 renderCart();
+
+document.getElementById('waOrderBtn').addEventListener('click', () => {
+  if (typeof esCurrentUser === 'function' && esCurrentUser()) {
+    esRecordOrder(getCart(), cartTotal());
+  }
+});
 </script>
+<script src="auth.js"></script>
 </body>
 </html>

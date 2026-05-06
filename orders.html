@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Order History | ELITE-SUBS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="light"]{
+  --pr:#c9a227;--pr2:#e8c252;--dk:#0a0a0a;--gld:linear-gradient(135deg,#c9a227,#f0d060,#c9a227);
+  --bg:#faf7f0;--bg2:#f5f0e6;--bg3:#ede8da;--surface:#fff;--surface2:#f9f5eb;--surface3:#f0ebd8;
+  --text:#1a140a;--muted:#7a6040;--border:rgba(150,110,30,.18);--divider:rgba(150,110,30,.10);
+  --shadow-sm:0 8px 24px rgba(100,70,10,.10);--shadow-md:0 18px 48px rgba(100,70,10,.14);--shadow-lg:0 32px 72px rgba(100,70,10,.18);
+  --r:20px;--rf:999px;--wrap:800px;
+}
+[data-theme="dark"]{
+  --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;--surface:#1e1e1e;--surface2:#252525;--surface3:#2e2e2e;
+  --text:#f5f0e8;--muted:#a89880;--border:rgba(201,162,39,.18);--divider:rgba(201,162,39,.10);
+  --shadow-sm:0 8px 24px rgba(0,0,0,.45);--shadow-md:0 18px 48px rgba(0,0,0,.55);--shadow-lg:0 32px 72px rgba(0,0,0,.65);
+}
+*{box-sizing:border-box;margin:0;padding:0} html{scroll-behavior:smooth}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+a{color:inherit;text-decoration:none} button,input{font:inherit;color:inherit} button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--pr);outline-offset:3px;border-radius:6px}
+.container{width:min(calc(100% - 2rem),var(--wrap));margin:auto}
+.hdr{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(16px);border-bottom:1px solid var(--divider)}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-text{font-family:'Baloo 2',cursive;font-size:26px;font-weight:900;background:var(--gld);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-actions{display:flex;gap:10px;align-items:center}
+.icon-btn{height:46px;border-radius:var(--rf);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;background:var(--surface);font-size:18px;position:relative;min-width:46px;padding:0 8px}
+.page{padding:40px 0 80px}
+.page-title{font-family:'Baloo 2',cursive;font-size:clamp(28px,5vw,44px);font-weight:900;margin-bottom:4px}
+.page-title span{background:var(--gld);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.page-sub{color:var(--muted);font-size:15px;margin-bottom:28px}
+.back-link{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;font-weight:700;padding:10px 0;margin-bottom:16px;transition:color .15s}
+.back-link:hover{color:var(--pr)}
+.order-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.order-head{display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--divider)}
+.order-id{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.order-date{font-size:13px;color:var(--muted);margin-top:2px}
+.order-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--divider);font-size:14px}
+.order-item:last-child{border-bottom:none}
+.order-item-name{font-weight:700}
+.order-item-meta{font-size:13px;color:var(--muted);margin-top:1px}
+.order-item-price{font-weight:800;white-space:nowrap;margin-left:12px}
+.order-total{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:2px solid var(--border)}
+.order-total-label{font-weight:800;font-size:15px}
+.order-total-val{font-family:'Baloo 2',cursive;font-size:28px;font-weight:900;background:var(--gld);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.empty-state,.gate{text-align:center;padding:64px 0}
+.empty-state .icon,.gate .icon{font-size:54px;margin-bottom:18px}
+.empty-state h2,.gate h2{font-family:'Baloo 2',cursive;font-size:30px;font-weight:900;margin-bottom:8px}
+.empty-state p,.gate p{color:var(--muted);margin-bottom:22px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:var(--rf);font-size:14px;font-weight:800;transition:transform .15s,box-shadow .15s;border:0;cursor:pointer;font-family:inherit}
+.btn:hover{transform:translateY(-2px)}
+.btn-gold{background:var(--gld);color:#0a0a0a;box-shadow:var(--shadow-md)}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="container hdr-row">
+    <a class="logo" href="index.html">
+      <div class="logo-text">ELITE-SUBS</div>
+    </a>
+    <div class="hdr-actions">
+      <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">🌙</button>
+      <div class="es-uwrap">
+        <button class="icon-btn" id="esUserBtn" aria-label="Account" style="font-size:13px;font-weight:900;padding:0 14px;gap:6px">👤 Sign In</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container page">
+    <a class="back-link" href="index.html">← Back to store</a>
+    <h1 class="page-title">Order <span>History</span></h1>
+    <p class="page-sub" id="ordersSubtitle"></p>
+    <div id="ordersContent"></div>
+  </div>
+</main>
+
+<script src="cart.js"></script>
+<script src="auth.js"></script>
+<script>
+const themeToggle = document.getElementById('themeToggle');
+let theme = localStorage.getItem('es-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+document.documentElement.setAttribute('data-theme', theme);
+themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+themeToggle.addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('es-theme', theme);
+});
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderOrders() {
+  const user = esCurrentUser();
+  const content = document.getElementById('ordersContent');
+  const subtitle = document.getElementById('ordersSubtitle');
+
+  if (!user) {
+    subtitle.textContent = '';
+    content.innerHTML = `
+      <div class="gate">
+        <div class="icon">🔒</div>
+        <h2>Sign in to view your orders</h2>
+        <p>Create a free account to save and track your order history forever.</p>
+        <button class="btn btn-gold" onclick="openAuthModal()">Sign In / Create Account</button>
+      </div>`;
+    return;
+  }
+
+  const orders = esGetOrders();
+  subtitle.textContent = orders.length
+    ? `${orders.length} order${orders.length === 1 ? '' : 's'} placed`
+    : '';
+
+  if (!orders.length) {
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📋</div>
+        <h2>No orders yet</h2>
+        <p>Your order history will appear here after you order via WhatsApp.</p>
+        <a class="btn btn-gold" href="index.html">Browse products</a>
+      </div>`;
+    return;
+  }
+
+  content.innerHTML = orders.map(order => `
+    <div class="order-card">
+      <div class="order-head">
+        <div>
+          <div class="order-id">${order.id}</div>
+          <div class="order-date">📅 ${formatDate(order.date)}</div>
+        </div>
+        <div class="order-total-val">$${order.total.toFixed(2)}</div>
+      </div>
+      ${order.items.map(item => `
+        <div class="order-item">
+          <div>
+            <div class="order-item-name">${item.name}</div>
+            <div class="order-item-meta">${item.duration}${item.qty > 1 ? ' &times; ' + item.qty : ''}</div>
+          </div>
+          <div class="order-item-price">$${(item.price * (item.qty || 1)).toFixed(2)}</div>
+        </div>`).join('')}
+      <div class="order-total">
+        <span class="order-total-label">Total</span>
+        <span class="order-total-val">$${order.total.toFixed(2)}</span>
+      </div>
+    </div>`).join('');
+}
+
+renderOrders();
+</script>
+</body>
+</html>
