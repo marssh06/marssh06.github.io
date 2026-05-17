@@ -149,15 +149,16 @@ async function renderOrders() {
 
   content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Loading all orders…</div>';
   if (_adminRef) { _adminRef.off(); }
-  _adminRef = firebase.database().ref('allorders').orderByChild('date');
+  _adminRef = firebase.database().ref('allorders');
   _adminRef.on('value', snap => {
+    _allOrders = [];
+    snap.forEach(c => { const v = c.val(); if (v) _allOrders.push(v); });
+    _allOrders.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     try {
-      _allOrders = [];
-      snap.forEach(c => _allOrders.unshift(c.val()));
       renderOrderList(_allOrders, subtitle, content);
     } catch(e) {
       console.error('renderOrderList failed:', e);
-      content.innerHTML = `<div style="text-align:center;padding:40px;color:red">Error rendering orders: ${e.message}</div>`;
+      content.innerHTML = `<div style="text-align:center;padding:40px;color:red">Render error: ${e.message}</div>`;
     }
   }, err => {
     console.error('Firebase read failed:', err);
@@ -165,6 +166,9 @@ async function renderOrders() {
   });
   return;
 }
+
+function safeTotal(val) { return (+(parseFloat(val) || 0)).toFixed(2); }
+function safeItems(val) { return Array.isArray(val) ? val : Object.values(val || {}); }
 
 function renderOrderList(orders, subtitle, content) {
   if (!orders.length) {
@@ -178,9 +182,10 @@ function renderOrderList(orders, subtitle, content) {
     return;
   }
 
-  const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
+  const totalRevenue = orders.reduce((s, o) => s + (parseFloat(o.total) || 0), 0);
   const uniqueUsers = new Set(orders.map(o => o.userEmail)).size;
-  subtitle.textContent = `${orders.length} order${orders.length === 1 ? '' : 's'} · $${totalRevenue.toFixed(2)} revenue · ${uniqueUsers} customer${uniqueUsers === 1 ? '' : 's'}`;
+  const lastUpdated = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  subtitle.textContent = `${orders.length} order${orders.length === 1 ? '' : 's'} · $${totalRevenue.toFixed(2)} revenue · ${uniqueUsers} customer${uniqueUsers === 1 ? '' : 's'} · updated ${lastUpdated}`;
 
   content.innerHTML = `
     <div class="stats-grid">
@@ -188,8 +193,9 @@ function renderOrderList(orders, subtitle, content) {
       <div class="stat-card"><div class="stat-val">$${totalRevenue.toFixed(2)}</div><div class="stat-label">Revenue</div></div>
       <div class="stat-card"><div class="stat-val">${uniqueUsers}</div><div class="stat-label">Customers</div></div>
     </div>
-    <div class="filter-bar">
-      <input type="text" id="orderSearch" placeholder="Search by customer, product, or order ID…">
+    <div class="filter-bar" style="display:flex;gap:8px;align-items:center">
+      <input type="text" id="orderSearch" placeholder="Search by customer, product, or order ID…" style="flex:1">
+      <button onclick="renderOrders()" style="padding:8px 16px;background:var(--gld);color:#0a0a0a;border:none;border-radius:8px;cursor:pointer;font-weight:600;white-space:nowrap">↺ Refresh</button>
     </div>
     <div class="section-title">All Orders</div>
     <div id="orderList">
@@ -199,18 +205,15 @@ function renderOrderList(orders, subtitle, content) {
   document.getElementById('orderSearch').addEventListener('input', e => {
     const q = e.target.value.toLowerCase();
     const filtered = _allOrders.filter(o =>
-      o.id.toLowerCase().includes(q) ||
-      o.userEmail.toLowerCase().includes(q) ||
+      (o.id || '').toLowerCase().includes(q) ||
+      (o.userEmail || '').toLowerCase().includes(q) ||
       (o.userName || '').toLowerCase().includes(q) ||
-      o.items.some(i => i.name.toLowerCase().includes(q))
+      safeItems(o.items).some(i => (i.name || '').toLowerCase().includes(q))
     );
     document.getElementById('orderList').innerHTML = filtered.map(renderOrderCard).join('') ||
       '<div style="text-align:center;padding:40px;color:var(--muted)">No orders match your search.</div>';
   });
 }
-
-function safeTotal(val) { return (+(parseFloat(val) || 0)).toFixed(2); }
-function safeItems(val) { return Array.isArray(val) ? val : Object.values(val || {}); }
 
 function renderOrderCard(order) {
   const items = safeItems(order.items);
