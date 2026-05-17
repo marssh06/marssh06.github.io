@@ -99,16 +99,23 @@ themeToggle.addEventListener('click', () => {
   localStorage.setItem('es-theme', theme);
 });
 
+let _ordersRef = null;
+
+function safeTotal(val) { return (+(parseFloat(val) || 0)).toFixed(2); }
+function safeItems(val) { return Array.isArray(val) ? val : Object.values(val || {}); }
+
 function formatDate(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) +
     ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
-async function renderOrders() {
+function renderOrders() {
   const user = esCurrentUser();
   const content = document.getElementById('ordersContent');
   const subtitle = document.getElementById('ordersSubtitle');
+
+  if (_ordersRef) { _ordersRef.off(); _ordersRef = null; }
 
   if (!user) {
     subtitle.textContent = '';
@@ -124,46 +131,63 @@ async function renderOrders() {
 
   content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Loading orders…</div>';
 
-  const orders = await esGetOrders();
-  subtitle.textContent = orders.length
-    ? `${orders.length} order${orders.length === 1 ? '' : 's'} placed`
-    : '';
+  _ordersRef = _db.ref('orders/' + user.uid);
+  _ordersRef.on('value', snap => {
+    const orders = [];
+    snap.forEach(c => { const v = c.val(); if (v) orders.push(v); });
+    orders.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-  if (!orders.length) {
-    content.innerHTML = `
-      <div class="empty-state">
-        <div class="icon">📋</div>
-        <h2>No orders yet</h2>
-        <p>Your order history will appear here after you order via WhatsApp.</p>
-        <a class="btn btn-gold" href="index.html">Browse products</a>
-      </div>`;
-    return;
-  }
+    const ts = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    subtitle.textContent = orders.length
+      ? `${orders.length} order${orders.length === 1 ? '' : 's'} · updated ${ts}`
+      : '';
 
-  const safeTotal = val => (+(parseFloat(val) || 0)).toFixed(2);
-  const safeItems = val => Array.isArray(val) ? val : Object.values(val || {});
-  content.innerHTML = orders.map(order => `
-    <div class="order-card">
-      <div class="order-head">
-        <div>
-          <div class="order-id">${order.id}</div>
-          <div class="order-date">📅 ${formatDate(order.date)}</div>
+    if (!orders.length) {
+      content.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📋</div>
+          <h2>No orders yet</h2>
+          <p>Your order history will appear here after you order via WhatsApp.</p>
+          <a class="btn btn-gold" href="index.html">Browse products</a>
+        </div>`;
+      return;
+    }
+
+    try {
+      content.innerHTML = `
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <button onclick="renderOrders()" style="padding:6px 14px;background:var(--gld);color:#0a0a0a;border:none;border-radius:8px;cursor:pointer;font-weight:600">↺ Refresh</button>
         </div>
-        <div class="order-total-val">$${safeTotal(order.total)}</div>
-      </div>
-      ${safeItems(order.items).map(item => `
-        <div class="order-item">
-          <div>
-            <div class="order-item-name">${item.name || '—'}</div>
-            <div class="order-item-meta">${item.duration || ''}${(item.qty || 1) > 1 ? ' &times; ' + item.qty : ''}</div>
-          </div>
-          <div class="order-item-price">$${safeTotal((item.price || 0) * (item.qty || 1))}</div>
-        </div>`).join('')}
-      <div class="order-total">
-        <span class="order-total-label">Total</span>
-        <span class="order-total-val">$${safeTotal(order.total)}</span>
-      </div>
-    </div>`).join('');
+        ${orders.map(order => `
+          <div class="order-card">
+            <div class="order-head">
+              <div>
+                <div class="order-id">${order.id}</div>
+                <div class="order-date">📅 ${formatDate(order.date)}</div>
+              </div>
+              <div class="order-total-val">$${safeTotal(order.total)}</div>
+            </div>
+            ${safeItems(order.items).map(item => `
+              <div class="order-item">
+                <div>
+                  <div class="order-item-name">${item.name || '—'}</div>
+                  <div class="order-item-meta">${item.duration || ''}${(item.qty || 1) > 1 ? ' &times; ' + item.qty : ''}</div>
+                </div>
+                <div class="order-item-price">$${safeTotal((item.price || 0) * (item.qty || 1))}</div>
+              </div>`).join('')}
+            <div class="order-total">
+              <span class="order-total-label">Total</span>
+              <span class="order-total-val">$${safeTotal(order.total)}</span>
+            </div>
+          </div>`).join('')}`;
+    } catch(e) {
+      console.error('orders render failed:', e);
+      content.innerHTML = `<div style="text-align:center;padding:40px;color:red">Error displaying orders: ${e.message}</div>`;
+    }
+  }, err => {
+    console.error('Firebase orders read failed:', err);
+    content.innerHTML = `<div style="text-align:center;padding:40px;color:red">Failed to load orders: ${err.message}</div>`;
+  });
 }
 </script>
 </body>
