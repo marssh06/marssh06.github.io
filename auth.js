@@ -221,6 +221,7 @@ function _updateUserBtn(fbUser) {
     drop.innerHTML = `
       <div class="es-dropemail">${fbUser.email}</div>
       <a href="orders.html">📋 Order History</a>
+      ${fbUser.email === 'marcelshmait@gmail.com' ? '<a href="admin.html">🛡 Admin Panel</a>' : ''}
       <button class="es-dropitem" id="esLogoutBtn">🚪 Sign Out</button>`;
     wrap.appendChild(drop);
     document.getElementById('esLogoutBtn').addEventListener('click', esLogout);
