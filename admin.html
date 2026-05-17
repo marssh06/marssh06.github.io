@@ -117,6 +117,7 @@ function formatDate(iso) {
 }
 
 let _allOrders = [];
+let _adminRef = null;
 
 async function renderOrders() {
   const user = esCurrentUser();
@@ -147,9 +148,9 @@ async function renderOrders() {
   }
 
   content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Loading all orders…</div>';
-
-  content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Loading all orders…</div>';
-  firebase.database().ref('allorders').orderByChild('date').on('value', snap => {
+  if (_adminRef) { _adminRef.off(); }
+  _adminRef = firebase.database().ref('allorders').orderByChild('date');
+  _adminRef.on('value', snap => {
     _allOrders = [];
     snap.forEach(c => _allOrders.unshift(c.val()));
     renderOrderList(_allOrders, subtitle, content);

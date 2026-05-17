@@ -234,16 +234,22 @@ themeToggle.addEventListener('click', () => {
 updateCartBadge();
 renderCart();
 
-document.getElementById('waOrderBtn').addEventListener('click', (e) => {
+document.getElementById('waOrderBtn').addEventListener('click', async (e) => {
+  e.preventDefault();
   const user = typeof esCurrentUser === 'function' && esCurrentUser();
   if (!user) {
-    e.preventDefault();
     if (typeof openAuthModal === 'function') openAuthModal();
     return;
   }
-  if (typeof esRecordOrder === 'function') {
-    esRecordOrder(getCart(), cartTotal());
-  }
+  const waBtn = document.getElementById('waOrderBtn');
+  const href = waBtn.href;
+  if (!href || href === '#' || href === location.href) return;
+  waBtn.style.opacity = '.5';
+  waBtn.style.pointerEvents = 'none';
+  if (typeof esRecordOrder === 'function') await esRecordOrder(getCart(), cartTotal());
+  clearCart();
+  renderCart();
+  window.open(href, '_blank', 'noopener');
 });
 </script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>

@@ -42,29 +42,40 @@ function esLogout() {
 }
 
 async function esRecordOrder(items, total) {
-  const u = _auth.currentUser;
+  const u = _user;
   if (!u || !items || !items.length) return;
   const order = {
     id: 'ORD-' + Date.now(),
     date: new Date().toISOString(),
     userEmail: u.email,
-    userName: u.displayName || '',
+    userName: u.name || '',
     items: items.map(i => ({ id: i.id, name: i.name, duration: i.duration, price: +i.price, qty: i.qty || 1 })),
     total: +parseFloat(total).toFixed(2)
   };
   const updates = {};
   updates['orders/' + u.uid + '/' + order.id] = order;
   updates['allorders/' + order.id] = order;
-  await _db.ref().update(updates);
+  try {
+    await _db.ref().update(updates);
+    return true;
+  } catch(e) {
+    console.error('esRecordOrder failed:', e);
+    return false;
+  }
 }
 
 async function esGetOrders() {
-  const u = _auth.currentUser;
+  const u = _user;
   if (!u) return [];
-  const snap = await _db.ref('orders/' + u.uid).orderByChild('date').once('value');
-  const list = [];
-  snap.forEach(c => list.unshift(c.val()));
-  return list;
+  try {
+    const snap = await _db.ref('orders/' + u.uid).orderByChild('date').once('value');
+    const list = [];
+    snap.forEach(c => list.unshift(c.val()));
+    return list;
+  } catch(e) {
+    console.error('esGetOrders failed:', e);
+    return [];
+  }
 }
 
 function _fbErr(e) {
