@@ -250,6 +250,7 @@ function initAuth() {
     _user = fbUser ? { uid: fbUser.uid, email: fbUser.email, name: fbUser.displayName || fbUser.email.split('@')[0] } : null;
     _updateUserBtn(fbUser);
     if (typeof renderOrders === 'function') renderOrders();
+    if (typeof renderCart === 'function') renderCart();
   });
 }
 
