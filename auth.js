@@ -43,7 +43,7 @@ function esLogout() {
 
 async function esRecordOrder(items, total) {
   const u = _user;
-  if (!u || !items || !items.length) return;
+  if (!u || !items || !items.length) return false;
   const order = {
     id: 'ORD-' + Date.now(),
     date: new Date().toISOString(),

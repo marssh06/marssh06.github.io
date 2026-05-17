@@ -243,13 +243,25 @@ document.getElementById('waOrderBtn').addEventListener('click', async (e) => {
   }
   const waBtn = document.getElementById('waOrderBtn');
   const href = waBtn.href;
-  if (!href || href === '#' || href === location.href) return;
+  if (!href || !href.startsWith('https://wa.me/')) return;
   waBtn.style.opacity = '.5';
   waBtn.style.pointerEvents = 'none';
-  if (typeof esRecordOrder === 'function') await esRecordOrder(getCart(), cartTotal());
+  const ok = typeof esRecordOrder === 'function' ? await esRecordOrder(getCart(), cartTotal()) : false;
+  if (!ok) {
+    waBtn.style.opacity = '';
+    waBtn.style.pointerEvents = '';
+    alert('Could not save your order. Please check your connection and try again.');
+    return;
+  }
   clearCart();
   renderCart();
-  window.open(href, '_blank', 'noopener');
+  const a = document.createElement('a');
+  a.href = href;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 });
 </script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
