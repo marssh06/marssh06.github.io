@@ -151,9 +151,17 @@ async function renderOrders() {
   if (_adminRef) { _adminRef.off(); }
   _adminRef = firebase.database().ref('allorders').orderByChild('date');
   _adminRef.on('value', snap => {
-    _allOrders = [];
-    snap.forEach(c => _allOrders.unshift(c.val()));
-    renderOrderList(_allOrders, subtitle, content);
+    try {
+      _allOrders = [];
+      snap.forEach(c => _allOrders.unshift(c.val()));
+      renderOrderList(_allOrders, subtitle, content);
+    } catch(e) {
+      console.error('renderOrderList failed:', e);
+      content.innerHTML = `<div style="text-align:center;padding:40px;color:red">Error rendering orders: ${e.message}</div>`;
+    }
+  }, err => {
+    console.error('Firebase read failed:', err);
+    content.innerHTML = `<div style="text-align:center;padding:40px;color:red">Failed to load orders: ${err.message}</div>`;
   });
   return;
 }
@@ -201,7 +209,11 @@ function renderOrderList(orders, subtitle, content) {
   });
 }
 
+function safeTotal(val) { return (+(parseFloat(val) || 0)).toFixed(2); }
+function safeItems(val) { return Array.isArray(val) ? val : Object.values(val || {}); }
+
 function renderOrderCard(order) {
+  const items = safeItems(order.items);
   return `
     <div class="order-card">
       <div class="order-head">
@@ -210,19 +222,19 @@ function renderOrderCard(order) {
           <div class="order-date">📅 ${formatDate(order.date)}</div>
           <div class="order-customer">👤 ${order.userName || ''}${order.userName ? ' · ' : ''}${order.userEmail}</div>
         </div>
-        <div class="order-total-val">$${order.total.toFixed(2)}</div>
+        <div class="order-total-val">$${safeTotal(order.total)}</div>
       </div>
-      ${order.items.map(item => `
+      ${items.map(item => `
         <div class="order-item">
           <div>
-            <div class="order-item-name">${item.name}</div>
-            <div class="order-item-meta">${item.duration}${item.qty > 1 ? ' &times; ' + item.qty : ''}</div>
+            <div class="order-item-name">${item.name || '—'}</div>
+            <div class="order-item-meta">${item.duration || ''}${(item.qty || 1) > 1 ? ' &times; ' + item.qty : ''}</div>
           </div>
-          <div class="order-item-price">$${(item.price * (item.qty || 1)).toFixed(2)}</div>
+          <div class="order-item-price">$${safeTotal((item.price || 0) * (item.qty || 1))}</div>
         </div>`).join('')}
       <div class="order-total">
         <span class="order-total-label">Total</span>
-        <span class="order-total-val">$${order.total.toFixed(2)}</span>
+        <span class="order-total-val">$${safeTotal(order.total)}</span>
       </div>
     </div>`;
 }
