@@ -234,34 +234,15 @@ themeToggle.addEventListener('click', () => {
 updateCartBadge();
 renderCart();
 
-document.getElementById('waOrderBtn').addEventListener('click', async (e) => {
-  e.preventDefault();
+document.getElementById('waOrderBtn').addEventListener('click', (e) => {
   const user = typeof esCurrentUser === 'function' && esCurrentUser();
   if (!user) {
+    e.preventDefault();
     if (typeof openAuthModal === 'function') openAuthModal();
     return;
   }
-  const waBtn = document.getElementById('waOrderBtn');
-  const href = waBtn.href;
-  if (!href || !href.startsWith('https://wa.me/')) return;
-  waBtn.style.opacity = '.5';
-  waBtn.style.pointerEvents = 'none';
-  const ok = typeof esRecordOrder === 'function' ? await esRecordOrder(getCart(), cartTotal()) : false;
-  if (!ok) {
-    waBtn.style.opacity = '';
-    waBtn.style.pointerEvents = '';
-    alert('Could not save your order. Please check your connection and try again.');
-    return;
-  }
-  clearCart();
-  renderCart();
-  const a = document.createElement('a');
-  a.href = href;
-  a.target = '_blank';
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  if (typeof esRecordOrder === 'function') esRecordOrder(getCart(), cartTotal());
+  setTimeout(() => { clearCart(); renderCart(); }, 500);
 });
 </script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>

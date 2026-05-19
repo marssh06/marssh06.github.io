@@ -4,7 +4,7 @@ const CART_KEY = 'es-cart';
 
 function getCart() {
   try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
-  catch { return []; }
+  catch(e) { return []; }
 }
 
 function saveCart(cart) {
@@ -30,7 +30,7 @@ function removeFromCart(id, duration) {
 function clearCart() { saveCart([]); }
 
 function cartTotal() {
-  return getCart().reduce((s, i) => s + i.price * (i.qty || 1), 0);
+  return getCart().reduce((s, i) => s + (parseFloat(i.price) || 0) * (i.qty || 1), 0);
 }
 
 function cartCount() {
@@ -40,7 +40,7 @@ function cartCount() {
 function buildCartWhatsAppMsg() {
   const cart = getCart();
   if (!cart.length) return '';
-  const lines = cart.map(i => `• ${i.name} (${i.duration}) x${i.qty || 1} — $${(i.price * (i.qty||1)).toFixed(2)}`).join('\n');
+  const lines = cart.map(i => `• ${i.name} (${i.duration}) x${i.qty || 1} — $${((parseFloat(i.price) || 0) * (i.qty || 1)).toFixed(2)}`).join('\n');
   return encodeURIComponent(`NEW ORDER — ELITE-SUBS\n\n${lines}\n\nTotal: $${cartTotal().toFixed(2)}`);
 }
 
@@ -52,4 +52,13 @@ function updateCartBadge() {
   badge.style.display = n ? 'flex' : 'none';
 }
 
-window.addEventListener('es-cart-updated', updateCartBadge);
+function updateWaFloat() {
+  const waFloat = document.getElementById('waFloat');
+  if (!waFloat) return;
+  const msg = buildCartWhatsAppMsg();
+  waFloat.href = msg
+    ? `https://wa.me/96181943935?text=${msg}`
+    : `https://wa.me/96181943935?text=${encodeURIComponent('Hi ELITE-SUBS, I\'d like to place an order!')}`;
+}
+
+window.addEventListener('es-cart-updated', () => { updateCartBadge(); updateWaFloat(); });
