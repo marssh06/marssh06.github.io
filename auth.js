@@ -239,7 +239,7 @@ function _updateUserBtn(fbUser) {
     btn.onclick = e => { e.stopPropagation(); drop.classList.toggle('open'); };
   } else {
     btn.innerHTML = '👤 Sign In';
-    btn.style.cssText = '';
+    btn.style.cssText = 'display:flex;align-items:center;font-size:13px;font-weight:900;padding:0 14px;gap:6px;width:auto';
     btn.onclick = openAuthModal;
   }
 }
